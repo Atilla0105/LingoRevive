@@ -7,8 +7,8 @@ export interface TranslationRecord {
   nextReviewDate: number;
   createdAt: number;
   lastReviewedAt: number;
-  stability: number; // For SRS algorithm
-  history: number[]; // Store a history of past ratings
+  stability?: number; // For SRS algorithm
+  history?: number[]; // Store a history of past ratings
 }
 
 export type AIProvider = 'openai' | 'gemini' | 'claude' | 'deepseek';
