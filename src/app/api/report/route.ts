@@ -3,13 +3,11 @@ import { TranslationRecord } from '@/lib/types';
 
 export async function POST(req: Request) {
   try {
-    const { records } = await req.json() as { records: TranslationRecord[] };
+    const { records, provider = 'openai', apiKey } = await req.json() as { records: TranslationRecord[], provider?: string, apiKey?: string };
 
     if (!records || records.length === 0) {
       return NextResponse.json({ error: 'No records provided' }, { status: 400 });
     }
-
-    const apiKey = process.env.AI_API_KEY;
 
     // Filter out duplicates in case the client sent multiples
     const uniqueRecordsMap = new Map();
@@ -44,8 +42,6 @@ ${uniqueRecords.map(r => `* **${r.original}**\n  *地道释义:* ${r.translation
       });
     }
 
-    // Example real AI integration
-    /*
     const systemPrompt = `你是一位资深的雅思口语考官兼母语级外教。用户将提供一组他们今天翻译或复习的句子（格式为："中文 -> 地道英文"）。
 请使用 Markdown 格式生成一份生动活泼、排版精美且富有鼓励性的**中文每日学习报告**。
 报告需要包含以下板块：
@@ -53,23 +49,83 @@ ${uniqueRecords.map(r => `* **${r.original}**\n  *地道释义:* ${r.translation
 2. "🌍 真实使用场景解析": 详细列举1-2个真实的海外社交或生活场景，说明如何自然地使用这些句子。
 3. "🤔 核心发音与词汇拆解": 挑选这几个句子中1-3个极具"老外感"的词汇或连读、语法亮点进行通俗易懂的母语级解析。`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: dataToAnalyze },
-        ],
-      }),
-    });
-    const data = await response.json();
-    return NextResponse.json({ report: data.choices[0].message.content });
-    */
+    let reportContent = '';
+
+    switch (provider) {
+      case 'openai':
+      case 'deepseek': {
+        const baseUrl = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+        const modelName = provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini';
+        const response = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: dataToAnalyze },
+            ],
+          }),
+        });
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`${provider} API error: ${errText}`);
+        }
+        const data = await response.json();
+        reportContent = data.choices[0].message.content;
+        break;
+      }
+
+      case 'gemini': {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
+        const geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              { role: "user", parts: [{ text: systemPrompt + "\n\nData:\n" + dataToAnalyze }] }
+            ]
+          })
+        });
+        if (!geminiRes.ok) {
+          const errText = await geminiRes.text();
+          throw new Error(`Gemini API error: ${errText}`);
+        }
+        const geminiData = await geminiRes.json();
+        reportContent = geminiData.candidates[0].content.parts[0].text;
+        break;
+      }
+
+      case 'claude': {
+        const claudeUrl = 'https://api.anthropic.com/v1/messages';
+        const claudeRes = await fetch(claudeUrl, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-3-5-sonnet-20240620',
+            system: systemPrompt,
+            messages: [{ role: 'user', content: dataToAnalyze }],
+            max_tokens: 1500
+          })
+        });
+        if (!claudeRes.ok) {
+          const errText = await claudeRes.text();
+          throw new Error(`Claude API error: ${errText}`);
+        }
+        const claudeData = await claudeRes.json();
+        reportContent = claudeData.content[0].text;
+        break;
+      }
+    }
+
+    return NextResponse.json({ report: reportContent });
 
   } catch (error) {
     return NextResponse.json({ error: 'Failed to generate report' }, { status: 500 });

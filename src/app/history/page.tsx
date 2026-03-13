@@ -33,7 +33,7 @@ export default function HistoryPage() {
             <BookOpen className="w-8 h-8 text-indigo-500" />
             Your Dictionary
           </h1>
-          <p className="text-zinc-500">View and search all the phrases you've translated.</p>
+          <p className="text-zinc-500">You haven&apos;t translated anything yet.</p>
         </div>
         
         <div className="relative w-full md:w-64">

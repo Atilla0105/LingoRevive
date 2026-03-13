@@ -30,10 +30,15 @@ export default function ReviewPage() {
     if (!currentCard) return;
 
     // We assume some stored SM2 state on the card (or default it)
+    const cardData = currentCard as TranslationRecord & {
+      sm2Repetitions?: number;
+      sm2Easiness?: number;
+      sm2Interval?: number;
+    };
     const previousData = {
-      repetitions: (currentCard as any).sm2Repetitions || 0,
-      easiness: (currentCard as any).sm2Easiness || 2.5,
-      interval: (currentCard as any).sm2Interval || 0,
+      repetitions: cardData.sm2Repetitions || 0,
+      easiness: cardData.sm2Easiness || 2.5,
+      interval: cardData.sm2Interval || 0,
     };
 
     const { sm2Data, nextReviewDate } = calculateNextReview(rating, previousData);

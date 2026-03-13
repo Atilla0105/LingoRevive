@@ -62,14 +62,12 @@ export async function POST(req: Request) {
     
     switch (provider) {
       case 'openai':
-      case 'deepseek':
-        // Both OpenAI and DeepSeek generally follow the OpenAI API spec
-        /*
-        const baseUrl = provider === 'deepseek' ? 'https://api.deepseek.com/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+      case 'deepseek': {
+        const baseUrl = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
         const modelName = provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o';
         const response = await fetch(baseUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: \`Bearer \${apiKey}\` },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({
             model: modelName,
             messages: [
@@ -78,32 +76,36 @@ export async function POST(req: Request) {
             ]
           }),
         });
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`${provider} API error: ${errText}`);
+        }
         const data = await response.json();
         translationContent = data.choices[0].message.content;
-        */
-        translationContent = `[Real API Call Placeholder: ${provider}]`;
         break;
+      }
         
-      case 'gemini':
-         /*
-         const geminiUrl = \`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=\${apiKey}\`;
+      case 'gemini': {
+         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
          const geminiRes = await fetch(geminiUrl, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({
              contents: [
-               { role: "user", parts: [{ text: systemPrompt + "\\n\\nText: " + text }] }
+               { role: "user", parts: [{ text: systemPrompt + "\n\nText: " + text }] }
              ]
            })
          });
+         if (!geminiRes.ok) {
+           const errText = await geminiRes.text();
+           throw new Error(`Gemini API error: ${errText}`);
+         }
          const geminiData = await geminiRes.json();
          translationContent = geminiData.candidates[0].content.parts[0].text;
-         */
-         translationContent = `[Real API Call Placeholder: Gemini]`;
          break;
+      }
          
-      case 'claude':
-        /*
+      case 'claude': {
          const claudeUrl = 'https://api.anthropic.com/v1/messages';
          const claudeRes = await fetch(claudeUrl, {
            method: 'POST',
@@ -119,11 +121,14 @@ export async function POST(req: Request) {
              max_tokens: 1024
            })
          });
+         if (!claudeRes.ok) {
+           const errText = await claudeRes.text();
+           throw new Error(`Claude API error: ${errText}`);
+         }
          const claudeData = await claudeRes.json();
          translationContent = claudeData.content[0].text;
-         */
-         translationContent = `[Real API Call Placeholder: Claude]`;
          break;
+      }
     }
 
     return NextResponse.json({ translation: translationContent, providerUsed: provider });

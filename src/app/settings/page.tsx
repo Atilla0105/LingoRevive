@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Settings as SettingsIcon, Key, Save, CheckCircle2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+// Removed motion from framer-motion
 import { AIProvider, AppSettings } from '@/lib/types';
 import { getSettings, saveSettings } from '@/lib/services/settings';
 
@@ -18,7 +18,14 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setSettings(getSettings());
+    let mounted = true;
+    const loadSettings = () => {
+      if (mounted) {
+        setSettings(getSettings());
+      }
+    };
+    loadSettings();
+    return () => { mounted = false; };
   }, []);
 
   const handleProviderChange = (provider: AIProvider) => {

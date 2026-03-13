@@ -6,6 +6,7 @@ import { TranslationRecord } from '@/lib/types';
 import { BarChart3, Bot, Sparkles, Loader2, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { getSettings } from '@/lib/services/settings';
 import { format, subDays, startOfDay, endOfDay, isSameDay } from 'date-fns';
 
 export default function ReportPage() {
@@ -40,10 +41,14 @@ export default function ReportPage() {
         return;
       }
 
+      const settings = getSettings();
+      const provider = settings.activeProvider || 'openai';
+      const apiKey = (settings.apiKeys as Record<string, string>)?.[provider] || '';
+
       const res = await fetch('/api/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ records: dailyRecords }),
+        body: JSON.stringify({ records: dailyRecords, provider, apiKey }),
       });
 
       if (!res.ok) throw new Error("Failed to generate report");

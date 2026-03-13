@@ -20,7 +20,7 @@ export const db = {
 
   saveTranslation: async (original: string, translation: string): Promise<{ record: TranslationRecord, isDuplicate: boolean }> => {
     const rawData = localStorage.getItem(DB_KEY);
-    let records: TranslationRecord[] = rawData ? JSON.parse(rawData) : [];
+    const records: TranslationRecord[] = rawData ? JSON.parse(rawData) : [];
     
     // Check for duplicate original text
     const existingIndex = records.findIndex(

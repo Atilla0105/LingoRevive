@@ -65,6 +65,7 @@ export function TranslationBox() {
       }
       
     } catch (err) {
+      console.error(err);
       setError('Oops, something went wrong. Please try again.');
     } finally {
       setIsTranslating(false);
@@ -190,7 +191,7 @@ export function TranslationBox() {
                   className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-full"
                 >
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  You've translated this before! Flagged as important.
+                  You&apos;ve translated this before! Flagged as important.
                 </motion.div>
               )}
             </div>
