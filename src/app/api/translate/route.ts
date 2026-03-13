@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 // In a real app, you would use process.env.OPENAI_API_KEY
 // For this MVP, we will simulate the AI response if the key is missing,
 // or provide a simple proxy to an AI API.

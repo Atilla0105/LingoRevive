@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { TranslationRecord } from '@/lib/types';
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
   try {
     const { records, provider = 'openai', apiKey } = await req.json() as { records: TranslationRecord[], provider?: string, apiKey?: string };
